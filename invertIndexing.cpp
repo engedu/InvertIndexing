@@ -1,4 +1,3 @@
-// reading a text file
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,28 +6,44 @@
 #include <dirent.h>
 using namespace std;
 
+void convertToLower(char c, string &word)
+{
+    //-----------------convert string to lowercase-------------------
+    int lw=0;
+    while (c)
+    {
+        if(isupper(c)) word[lw] = tolower(c);
+        lw++;
+        c = word[lw];
+    }
+    //-----------------------------------------------------------------
+                
+}
+
 int main (int arc, char *argv[]) {
+
 	int i=0;
 	int count_file=0;
 	ostringstream ss;
+
+    //--------------------------count file in directory-----------------------------------
 	DIR *dir;
 	struct dirent *ent;
     string fol = argv[1];
     string mydir = "/home/silverice/Documents/Assignment_OS/"+fol+"/data";
 	if ((dir = opendir (mydir.c_str())) != NULL) {
-  	/* print all the files and directories within directory */
   	while ((ent = readdir (dir)) != NULL) {
     	//printf ("%s\n", ent->d_name);
     	count_file++;
   	}
   		closedir (dir);
 	} else {
-  		/* could not open directory */
   		perror ("");
   		return EXIT_FAILURE;
 	}
+    //--------------------------------------------------------------------------------------
 
-	for(i=1;i<= count_file-2;i++)
+	for(i=1;i<= count_file-2;i++) 
 	{
 		ss.str( std::string() );
 		ss.clear();
@@ -41,18 +56,27 @@ int main (int arc, char *argv[]) {
   		{
     		while ( myfile >> word )
     		{
-      			if (word.find_first_not_of(need) != std::string::npos)
+                convertToLower(word[0],word);
+                if (word.find_first_not_of(need) != std::string::npos)
 				{
+                    //at least one char in word is special char.
     				char len = word.length();
     				for(int j=0;j<len;j++)
     				{
-                        if(need.find_first_of(word[i]) != std::string::npos)
-                            cout << word[i];
+                        if(need.find_first_of(word[j]) != std::string::npos)
+                        {
+                            //cout << word[j];
+                        }
+                        else {
+                            //cout << " ";
+                            break;
+                        }
 
     				}
-				}
-				else 
-					cout << word << " ";
+				} else {
+                    //not have special char in word.
+                    //cout << word << " ";
+                }
     		}
     		myfile.close();
     		//cout << "\n\n\n";
