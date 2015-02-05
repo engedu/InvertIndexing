@@ -5,7 +5,8 @@
 #include <sstream>
 #include <dirent.h>
 #include <unordered_map>
-#include <list>
+#include <map>
+#include <algorithm>
 using namespace std;
 
 void convertToLower(char c, string &word)
@@ -20,24 +21,29 @@ void convertToLower(char c, string &word)
                 
 }
 
-void addWord(string key, string fnum, unordered_map<string,int/*list<string>*/> &map)
+void addWord(string key, string fnum, unordered_map<string,string/*list<string>*/> &unmap)
 {
-    list<string> lt;
-    int i=0;
-    unordered_map<string,int/*list<string>*/>::const_iterator got = map.find (key);
+    string str;
+    unordered_map<string,string/*list<string>*/>::const_iterator got = unmap.find (key);
     
-    if ( got == map.end() )
+    if ( got == unmap.end() )
     {
         //not in map.
         //lt.push_back(fnum);
-        map.emplace(key,1/*lt*/);
+        unmap.emplace(key,fnum+","/*lt*/);
     }
     else {
         //already in map.
-        i = got->second;
+        str = got->second;
+        if(str.find_first_of(fnum) == string::npos)
+        {
+            str+=fnum+",";
+            unmap.at(key) = str;
+        }
+
         /*lt.push_back(fnum);
         lt.unique();*/
-        map.at(key) = i++/*lt*/;
+        
     }
 }
 
@@ -48,8 +54,7 @@ int main (int arc, char *argv[]) {
 	ostringstream ss;
     string need = "abcdefghijklmnopqrstuvwxyz";
 
-    unordered_map<string,int/*list<string>*/> map;
-    list<string> lst;
+    unordered_map<string,string/*list<string>*/> unmap;
 
     //--------------------------count file in directory-----------------------------------
 	DIR *dir;
@@ -101,12 +106,12 @@ int main (int arc, char *argv[]) {
                             break;
                         }
     				}
-                    addWord(newword,fnum,map);
+                    addWord(newword,fnum,unmap);
 
 				} else {
                     //not have special char in word.
                     //cout << word << " ";
-                    addWord(word,fnum,map);
+                    addWord(word,fnum,unmap);
                 }
     		}
     		myfile.close();
@@ -116,15 +121,22 @@ int main (int arc, char *argv[]) {
   		else break; 
 	}
 
+    //sort.
+    map<string,string> ordered(unmap.begin(), unmap.end());
+
     //test value in map.
     //already right format!!!
     //To do : sort!
-    cout << map.size() << endl;
-    for (auto& x: map)
+    string ans;
+    size_t n;
+    cout << ordered.size() << endl;
+    for (auto& x: ordered)
     {
+        ans = x.second;
+        n = std::count(ans.begin(), ans.end(), ',');
         cout << x.first << ":" ;
         //lst = x.second;
-        cout << x.second/*lst.size()*/ << ":";
+        cout << n << ":" << ans.substr(0,ans.size()-1)/*lst.size()*/ ;
         /*for (list<string>::iterator it = lst.begin(); it != lst.end(); it++)
         {
             if(it == lst.begin())
