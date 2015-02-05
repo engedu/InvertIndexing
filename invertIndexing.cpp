@@ -21,29 +21,24 @@ void convertToLower(char c, string &word)
                 
 }
 
-void addWord(string key, string fnum, unordered_map<string,string/*list<string>*/> &unmap)
+void addWord(string key, string fnum, unordered_map<string,string> &unmap)
 {
     string str;
-    unordered_map<string,string/*list<string>*/>::const_iterator got = unmap.find (key);
+    unordered_map<string,string>::const_iterator got = unmap.find (key);
     
     if ( got == unmap.end() )
     {
         //not in map.
-        //lt.push_back(fnum);
-        unmap.emplace(key,fnum+","/*lt*/);
+        unmap.emplace(key,fnum+",");
     }
     else {
         //already in map.
         str = got->second;
-        if(str.find_first_of(fnum) == string::npos)
+        if (str.find(fnum)==std::string::npos)
         {
             str+=fnum+",";
             unmap.at(key) = str;
         }
-
-        /*lt.push_back(fnum);
-        lt.unique();*/
-        
     }
 }
 
@@ -54,7 +49,7 @@ int main (int arc, char *argv[]) {
 	ostringstream ss;
     string need = "abcdefghijklmnopqrstuvwxyz";
 
-    unordered_map<string,string/*list<string>*/> unmap;
+    unordered_map<string,string> unmap;
 
     //--------------------------count file in directory-----------------------------------
 	DIR *dir;
@@ -63,7 +58,7 @@ int main (int arc, char *argv[]) {
     string mydir = "/home/silverice/Documents/Assignment_OS/"+fol+"/data";
 	if ((dir = opendir (mydir.c_str())) != NULL) {
   	while ((ent = readdir (dir)) != NULL) {
-    	//printf ("%s\n", ent->d_name);
+    	//cout << ent->d_name << endl;
     	count_file++;
   	}
   		closedir (dir);
@@ -124,28 +119,19 @@ int main (int arc, char *argv[]) {
     //sort.
     map<string,string> ordered(unmap.begin(), unmap.end());
 
-    //test value in map.
-    //already right format!!!
-    //To do : sort!
+    //write output to file.
+    ofstream outputFile("myOutput1");
     string ans;
     size_t n;
-    cout << ordered.size() << endl;
+    outputFile << ordered.size() << endl;
     for (auto& x: ordered)
     {
         ans = x.second;
         n = std::count(ans.begin(), ans.end(), ',');
-        cout << x.first << ":" ;
-        //lst = x.second;
-        cout << n << ":" << ans.substr(0,ans.size()-1)/*lst.size()*/ ;
-        /*for (list<string>::iterator it = lst.begin(); it != lst.end(); it++)
-        {
-            if(it == lst.begin())
-                cout << *it ;
-            else
-                cout << "," << *it;
-        }*/
+        outputFile << x.first << ":" ;
+        outputFile << n << ":" << ans.substr(0,ans.size()-1);
 
-        cout << endl;
+        outputFile << endl;
     }
     
   return 0;
