@@ -98,10 +98,16 @@ int main (int arc, char *argv[]) {
                         }
                         else {
                             //cout << " ";
-                            break;
+                            //break;
+                            addWord(newword,fnum,unmap);
+                            newword = "";
                         }
     				}
-                    addWord(newword,fnum,unmap);
+                    if(need.find_first_of(word[len-1]) != string::npos)
+                    {
+                        addWord(newword,fnum,unmap);
+                    }
+                    
 
 				} else {
                     //not have special char in word.
@@ -123,16 +129,22 @@ int main (int arc, char *argv[]) {
     ofstream outputFile("myOutput1");
     string ans;
     size_t n;
-    outputFile << ordered.size() << endl;
+    outputFile << ordered.size()-1 << endl;
     for (auto& x: ordered)
     {
-        ans = x.second;
-        n = std::count(ans.begin(), ans.end(), ',');
-        outputFile << x.first << ":" ;
-        outputFile << n << ":" << ans.substr(0,ans.size()-1);
+        if (x.first != "")
+        {
+            ans = x.second;
+            n = std::count(ans.begin(), ans.end(), ',');
+            outputFile << x.first << ":" ;
+            outputFile << n << ":" << ans.substr(0,ans.size()-1);
 
-        outputFile << endl;
+            outputFile << endl;
+        }
+        
     }
     
   return 0;
+
+  //cut first line in file
 }
