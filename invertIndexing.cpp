@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <map>
 #include <algorithm>
+#include <vector>
 using namespace std;
 
 void convertToLower(char c, string &word)
@@ -15,64 +16,38 @@ void convertToLower(char c, string &word)
     int lw=0;
     while (c)
     {
-        word[lw] = tolower(c);
+        if(isupper(c)) word[lw] = tolower(c);
         lw++;
         c = word[lw];
     }
                 
 }
 
-void addWord(string key, string fnum, unordered_map<string,string> &unmap)
+void addWord(string key, string fnum, unordered_map<string,vector<string>> &unmap)
 {
-    string str;
-    /*unordered_map<string,string>::const_iterator got = unmap.find (key);
-    
-    if ( got == unmap.end() )
+    if (unmap[key].empty() || unmap[key].back()!=fnum)
     {
         //not in map.
-        unmap.emplace(key,fnum+",");
-    }
-    else {
-        //already in map.
-        str = got->second;
-        if (str.find(fnum)==std::string::npos)
-        {
-            str+=fnum+",";
-            unmap.at(key) = str;
-        }
-    }*/
-
-    if (unmap[key]=="")
-    {
-        //not in map.
-        //unmap.emplace(key,fnum+",");
-        unmap[key] = fnum+",";
-    }
-    else {
-        //already in map.
-        str = unmap[key];
-        if (str.find(fnum)==std::string::npos)
-        {
-            str+=fnum+",";
-            //unmap.at(key) = str;
-            unmap[key] = str;
-        }
+        unmap[key].push_back(fnum);
     }
 }
 
 int main (int arc, char *argv[]) {
 
 	int i=0;
-	int count_file=0;
+    int count_file=0;
 	ostringstream ss;
     string need = "abcdefghijklmnopqrstuvwxyz";
 
-    unordered_map<string,string> unmap;
+    /*unordered_map<string,vector<string>> unmap;*/
 
     //--------------------------count file in directory-----------------------------------
 	DIR *dir;
 	struct dirent *ent;
     string fol = argv[1];
+
+    unordered_map<string, vector<string>> unmap;
+
     string mydir = "/home/silverice/Documents/Assignment_OS/"+fol+"/data";
 	if ((dir = opendir (mydir.c_str())) != NULL) {
   	while ((ent = readdir (dir)) != NULL) {
@@ -90,8 +65,9 @@ int main (int arc, char *argv[]) {
 	{
 		ss.str( string() );
 		ss.clear();
-		string word;
 		ss << i;
+        string word;
+
         string fnum = ss.str();
 		string namestr = mydir+"/file"+fnum+".txt";
   		ifstream myfile (namestr.c_str());
@@ -102,6 +78,7 @@ int main (int arc, char *argv[]) {
     		while ( myfile >> word )
     		{
                 convertToLower(word[0],word);
+
                 if (word.find_first_not_of(need) != string::npos)
 				{
                     //at least one char in word is special char.
@@ -141,21 +118,24 @@ int main (int arc, char *argv[]) {
 	}
 
     //sort.
-    map<string,string> ordered(unmap.begin(), unmap.end());
+    map<string,vector<string>> ordered(unmap.begin(), unmap.end());
 
     //write output to file.
     ofstream outputFile("myOutputMedium");
-    string ans;
-    size_t n;
+    vector<string> v;
     outputFile << ordered.size()-1 << endl;
     for (auto& x: ordered)
     {
+        v = x.second;
         if (x.first != "")
         {
-            ans = x.second;
-            n = count(ans.begin(), ans.end(), ',');
             outputFile << x.first << ":" ;
-            outputFile << n << ":" << ans.substr(0,ans.size()-1);
+            outputFile << v.size() << ":" ;
+            outputFile << v[0] ;
+            for (int i = 1; i < v.size(); i++)
+            {
+                outputFile << "," << v[i] ;
+            }
 
             outputFile << endl;
         }
@@ -163,6 +143,4 @@ int main (int arc, char *argv[]) {
     }
     
   return 0;
-
-  //cut first line in file
 }
