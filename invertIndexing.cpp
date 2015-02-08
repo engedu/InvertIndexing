@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
+#include <cstring>
 #include <sstream>
 #include <dirent.h>
 #include <unordered_map>
@@ -14,7 +15,7 @@ void convertToLower(char c, string &word)
     int lw=0;
     while (c)
     {
-        if(isupper(c)) word[lw] = tolower(c);
+        word[lw] = tolower(c);
         lw++;
         c = word[lw];
     }
@@ -24,7 +25,7 @@ void convertToLower(char c, string &word)
 void addWord(string key, string fnum, unordered_map<string,string> &unmap)
 {
     string str;
-    unordered_map<string,string>::const_iterator got = unmap.find (key);
+    /*unordered_map<string,string>::const_iterator got = unmap.find (key);
     
     if ( got == unmap.end() )
     {
@@ -38,6 +39,23 @@ void addWord(string key, string fnum, unordered_map<string,string> &unmap)
         {
             str+=fnum+",";
             unmap.at(key) = str;
+        }
+    }*/
+
+    if (unmap[key]=="")
+    {
+        //not in map.
+        //unmap.emplace(key,fnum+",");
+        unmap[key] = fnum+",";
+    }
+    else {
+        //already in map.
+        str = unmap[key];
+        if (str.find(fnum)==std::string::npos)
+        {
+            str+=fnum+",";
+            //unmap.at(key) = str;
+            unmap[key] = str;
         }
     }
 }
@@ -126,7 +144,7 @@ int main (int arc, char *argv[]) {
     map<string,string> ordered(unmap.begin(), unmap.end());
 
     //write output to file.
-    ofstream outputFile("myOutput1");
+    ofstream outputFile("myOutputMedium");
     string ans;
     size_t n;
     outputFile << ordered.size()-1 << endl;
@@ -135,7 +153,7 @@ int main (int arc, char *argv[]) {
         if (x.first != "")
         {
             ans = x.second;
-            n = std::count(ans.begin(), ans.end(), ',');
+            n = count(ans.begin(), ans.end(), ',');
             outputFile << x.first << ":" ;
             outputFile << n << ":" << ans.substr(0,ans.size()-1);
 
