@@ -13,7 +13,7 @@
 #include <unistd.h>
 using namespace std;
 
-#define NUM_THREADS     3
+#define NUM_THREADS     2
 
 void convertToLower(char c, string &word)
 {
@@ -27,7 +27,7 @@ void convertToLower(char c, string &word)
                 
 }
 
-void addWord(string key, int fnum, unordered_map<string,vector<int>> &unmap)
+void addWord(string key, string fnum, unordered_map<string,vector<string>> &unmap)
 {
     if (unmap[key].empty() || unmap[key].back()!=fnum)
     {
@@ -37,18 +37,17 @@ void addWord(string key, int fnum, unordered_map<string,vector<int>> &unmap)
 }
 
 struct thread_data{
-   int  thread_id;
-   int firstFile;
-   int endFile;
-   string mydir;
-   unordered_map<string, vector<int>> unmap;
+    int  thread_id;
+    int firstFile;
+    int endFile;
+    string mydir;
+    unordered_map<string, vector<string>> unmap;
 };
 
 void *core(void *t)
 {
     string need = "abcdefghijklmnopqrstuvwxyz"; 
     ostringstream ss;
-    int fname;
     long tid;
     tid = (long)t;
 
@@ -90,23 +89,20 @@ void *core(void *t)
                         else {
                             //cout << " ";
                             //break;
-                            fname = atoi(fnum.c_str());
-                            addWord(newword,fname,data->unmap);
+                            addWord(newword,fnum,data->unmap);
                             newword = "";
                         }
                     }
                     if(need.find_first_of(word[len-1]) != string::npos)
                     {
-                        fname = atoi(fnum.c_str());
-                        addWord(newword,fname,data->unmap);
+                        addWord(newword,fnum,data->unmap);
                     }
                     
 
                 } else {
                     //not have special char in word.
                     //cout << word << " ";
-                    fname = atoi(fnum.c_str());
-                    addWord(word,fname,data->unmap);
+                    addWord(word,fnum,data->unmap);
                 }
             }
             myfile.close();
@@ -128,9 +124,8 @@ int main (int arc, char *argv[])
     //--------------------------count file in directory-----------------------------------
 	DIR *dir;
 	struct dirent *ent;
-    //string fol = argv[1];
 
-    string mydir = argv[1];//"/home/silverice/Documents/Assignment_OS/"+fol+"/data";
+    string mydir = argv[1];
 	if ((dir = opendir (mydir.c_str())) != NULL) {
         while ((ent = readdir (dir)) != NULL) {
             string a = ent->d_name;
@@ -144,9 +139,8 @@ int main (int arc, char *argv[])
 	}
     //--------------------------------------------------------------------------------------
 
-    unordered_map<string, vector<int>> unmap1;
-    unordered_map<string, vector<int>> unmap2;
-    unordered_map<string, vector<int>> unmap3;
+    unordered_map<string, vector<string>> unmap1;
+    unordered_map<string, vector<string>> unmap2;
 
     int cnt = 0;
     int n = count_file / NUM_THREADS;
@@ -162,12 +156,12 @@ int main (int arc, char *argv[])
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
     for(int i=0; i < NUM_THREADS; i++ ){
-        cout << "main() : creating thread, " << i << endl;
 
         td[i].mydir = mydir;
         td[i].thread_id = i;
         td[i].firstFile = cnt+1;
 
+        //------------------give unmap--------------------------
         if (i==0)
         {
             td[i].unmap = unmap1;
@@ -176,12 +170,9 @@ int main (int arc, char *argv[])
         {
             td[i].unmap = unmap2;
         }
-        else if (i==2)
-        {
-            td[i].unmap = unmap3;
-        }
+        //-------------------------------------------------------
 
-
+        //--------------give endfile & increase cnt--------------
         if (i == NUM_THREADS-1)
             td[i].endFile = count_file;
 
@@ -190,61 +181,45 @@ int main (int arc, char *argv[])
             cnt = cnt+n;
             td[i].endFile = cnt;
         }
+        //-------------------------------------------------------
         
         rc = pthread_create(&threads[i], NULL, core, (void *)&td[i] );
         if (rc){
-            cout << "Error:unable to create thread," << rc << endl;
+            cout << "Error can't thread," << rc << endl;
             exit(-1);
         }
     }
 
-    // free attribute and wait for the other threads
+
     pthread_attr_destroy(&attr);
+
     for(int i=0; i < NUM_THREADS; i++ ){
         rc = pthread_join(threads[i], &status);
         if (rc){
-            cout << "Error:unable to join," << rc << endl;
+            cout << "Error can't join," << rc << endl;
             exit(-1);
         }
-        cout << "Main: completed thread id :" << i ;
-        cout << "  exiting with status :" << status << endl;
 
-        if (i==1)
-        {
-            for (auto& x: td[1].unmap)
-            {
-                td[0].unmap[x.first].insert(td[0].unmap[x.first].end(),(x.second).begin(),(x.second).end());
-            }
-            td[1].unmap.clear();
-        }
-
-        else if (i==2)
-        {
-            for (auto& x: td[2].unmap)
-            {
-                td[0].unmap[x.first].insert(td[0].unmap[x.first].end(),(x.second).begin(),(x.second).end());
-            }
-            td[2].unmap.clear();
-        }
     }
 
-
+    //put data in thread 1 to thread 0
+    for (auto& x: td[1].unmap)
+        td[0].unmap[x.first].insert(td[0].unmap[x.first].end(),(x.second).begin(),(x.second).end());
+    
+    td[1].unmap.clear();
 
     //sort.
-    map<string,vector<int>> ordered((td[0].unmap).begin(), (td[0].unmap).end());
+    map<string,vector<string>> ordered((td[0].unmap).begin(), (td[0].unmap).end());
+    td[0].unmap.clear();
 
     //write output to file.
     ofstream outputFile("output");
-    vector<int> v;
-    vector<int>::iterator it;
+    vector<string> v;
 
     outputFile << ordered.size()-1 << endl;
     for (auto& x: ordered)
     {
         v = x.second;
-        sort (v.begin(), v.end());
-        it = unique (v.begin(), v.end());
-        v.resize( distance(v.begin(),it) );
         
         if (x.first != "")
         {
@@ -260,9 +235,8 @@ int main (int arc, char *argv[])
         }
         
     }
-    td[0].unmap.clear();
+    ordered.clear();
     
-    cout << "Main: program exiting." << endl;
     pthread_exit(NULL);
     
   return 0;
